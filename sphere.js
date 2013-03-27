@@ -74,12 +74,12 @@ function TwoD(x, y) {
     this.y = y;
 }
 
-// Rotator is used to roate a position on the surface of the sphere
-// by a rototaion angle, which is a ThreeD vector.
+// Rotator is used to rotate a position on the surface of the sphere
+// by a rotation angle, which is a ThreeD vector.
 function Rotator(rotationAngle) {
 
     // All the points on the surface of the sphere will be rotated together.
-    // Precompute the trig functions so the can be reused for each point.
+    // Precompute the trig functions so they may be reused for each point.
     var sx = Math.sin(rotationAngle.x);
     var cx = Math.cos(rotationAngle.x);
     var sy = Math.sin(rotationAngle.y);
@@ -189,15 +189,15 @@ function sphere(tags) {
 
 
     // Set up various constants.  Many of these are used inside loops, so
-    // the are cache here to avoid recomputing inside loops.
+    // the are cached here to avoid recomputing.
     var framesPerSecond = 20;
 
     // These control the rate at which the sphere wobbles:
     // The time before a dimension should drift back to its original position.
     var secondsToFullyOscillate = 10;
-    // This bounds how far from its original position the shere can wobble.
+    // This bounds how far from its original position the sphere can wobble.
     var driftMaxRotation = 10 * Math.PI / 180;
-    // Convert the drift rate to an step size to take during each frame.
+    // Convert the drift rate to a step size to take during each frame.
     // There's a slightly different rate in each angle to make the drift more wobbly.
     var driftOscillationStep = new ThreeD(
             2 * Math.PI / (framesPerSecond * secondsToFullyOscillate),
@@ -209,7 +209,7 @@ function sphere(tags) {
     // This effects how far mouse dragging will move the sphere.
     var dragFactor = Math.PI / (32 * radius);
 
-    // Controls the size of text.  Later scale factor results in larger text.
+    // Controls the size of text.  Larger scale factor results in larger text.
     var fontScaleFactor = 20;
     var minimumFontSize = 10;
 
@@ -218,7 +218,7 @@ function sphere(tags) {
     var driftRotation = new ThreeD(0, 0, 0);
     var dragRotation = new ThreeD(0, 0, 0);
 
-    // Set to TwoD point when a drag is in action, or null when a drag
+    // Set to a TwoD point when a drag is in action, or null when a drag
     // is not in action.
     var dragStart = null;
     // Measure how far a drag went to distinguish from click.
@@ -256,7 +256,7 @@ function sphere(tags) {
         if (ev.offsetX && ev.offsetY) {
              return new TwoD(ev.offsetX, ev.offsetY);
         }
-        // This works in firefox and chrome:
+        // This works in firefox or chrome:
         return new TwoD(ev.layerX - canvas.offsetLeft,
                     ev.layerY - canvas.offsetTop);
     }
@@ -282,7 +282,7 @@ function sphere(tags) {
             return;
         }
 
-        // If dragging, compute far the sphere should move, which
+        // If dragging, compute how far the sphere should move, which
         // is relative to where the drag started.
         var offsetX = ev.clientX - dragStart.x;
         var offsetY = ev.clientY - dragStart.y;
@@ -299,7 +299,7 @@ function sphere(tags) {
     }
 
     function onClick(ev) {
-        // Distinguish between and clicks.  Only clicks open links.
+        // Distinguish between drags and clicks.  Only clicks open links.
         if (peakDragDistance.x > 2 || peakDragDistance.y > 2) {
         }
         else if (highlighted != null) {
@@ -327,15 +327,6 @@ function sphere(tags) {
         driftRotation.x = Math.sin(driftOscillation.x) * driftMaxRotation;
         driftRotation.y = Math.sin(driftOscillation.y) * driftMaxRotation;
         driftRotation.z = Math.sin(driftOscillation.z) * driftMaxRotation;
-    }
-
-    function onInterval() {
-        restoreDragRotation();
-        updateDriftRotation();
-        var totalRotation = driftRotation.clone();
-        totalRotation.add(dragRotation);
-        rotatePoints(totalRotation);
-        draw();
     }
 
     function rotatePoints(rotationAngle) {
@@ -382,6 +373,15 @@ function sphere(tags) {
         }
     }
 
+    function onInterval() {
+        restoreDragRotation();
+        updateDriftRotation();
+        var totalRotation = driftRotation.clone();
+        totalRotation.add(dragRotation);
+        rotatePoints(totalRotation);
+        draw();
+    }
+    
     canvas.addEventListener("mousemove", onMouseMove, false);
     canvas.addEventListener("mousedown", onMouseDown, false);
     canvas.addEventListener("mouseup", onMouseUp, false);
@@ -395,14 +395,15 @@ function sphere(tags) {
 
 function loadSphere(jsonObj) {
     var tags = getTopTags(jsonObj.categories);
-    // It seems to work if wait for the load or just start it right
-    // away, so for now just do now.
+    // It seems to work if waiting for the load or just starting it right
+    // away, so for now just do the former.
     sphere(tags)
+    // or switch to this to do the latter
     // window.addEventListener('load', function() { sphere(tags) } , false);
 }
 
 function kickSphere() {
-    var key = '_' + + new Date;
+    var key = '_' + new Date;
     var script = document.createElement('script');
     var head = document.getElementsByTagName('head')[0] 
             || document.documentElement;
