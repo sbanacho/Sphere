@@ -179,7 +179,7 @@ function sphereContext() {
         this.context.globalAlpha = 1.0;
         this.context.fillStyle = this.gradient;
         this.context.fillRect(0, 0, this.size, this.size);
-    }
+    };
 }
 
 function sphere(tags, context) {
@@ -398,7 +398,7 @@ function loadSphere(jsonObj, context) {
     var tags = getTopTags(jsonObj.categories);
     // It seems to work if waiting for the load or just starting it right
     // away, so for now just do the former.
-    sphere(tags, context)
+    sphere(tags, context);
     // or switch to this to do the latter
     // window.addEventListener('load', function() { sphere(tags) } , false);
 }
