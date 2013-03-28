@@ -144,23 +144,11 @@ function Slot(phi, tag, rank, total) {
     };
 }
 
-function sphere(tags) {
-    var canvasSize = (function() {
-        var sphereDiv = document.getElementById("sphereDiv");
-        return sphereDiv.offsetWidth;
-    } ());
+function sphereContext() {
+    this.size = document.getElementById("sphereDiv").offsetWidth;
+    this.canvas = document.getElementById('sphere');
 
-    // The sphere is slightly smaller than the canvasSize.  Calculate
-    // the radius of the sphere.
-    var scaleFactor = 0.75;
-    var radius = scaleFactor * canvasSize / 2;
-    // Offset is the X and Y offset of the upper-left corner of
-    // the square that bounds the sphere inside the canvas.
-    var offset = (1.0 - scaleFactor) * canvasSize / 2.0;
-
-    var canvas = document.getElementById('sphere');
-
-    var context = (function(d) {
+    this.context = (function(d, canvas) {
         var canvasContext = canvas.getContext('2d');
 
         canvas.width = d;
@@ -170,9 +158,9 @@ function sphere(tags) {
         canvasContext.textAlign = 'center';
 
         return canvasContext;
-    } (canvasSize));
+    } (this.size, this.canvas));
 
-    var gradient = (function(rad) {
+    this.gradient = (function(rad, context) {
         var shadowCenter = rad * 0.75;
         var shadowRadius = rad * 0.10;
 
@@ -185,8 +173,24 @@ function sphere(tags) {
         radgrad.addColorStop(1, '#FFFFFF');
 
         return radgrad;
-    } (canvasSize / 2));
+    } (this.size / 2, this.context));
 
+    this.reset = function() {
+        this.context.globalAlpha = 1.0;
+        this.context.fillStyle = this.gradient;
+        this.context.fillRect(0, 0, this.size, this.size);
+    }
+}
+
+function sphere(tags, context) {
+    // The sphere is slightly smaller than the canvas size.  Calculate
+    // the radius of the sphere.
+    var scaleFactor = 0.75;
+    var radius = scaleFactor * context.size / 2;
+
+    // Offset is the X and Y offset of the upper-left corner of
+    // the square that bounds the sphere inside the canvas.
+    var offset = (1.0 - scaleFactor) * context.size / 2.0;
 
     // Set up various constants.  Many of these are used inside loops, so
     // the are cached here to avoid recomputing.
@@ -257,8 +261,8 @@ function sphere(tags) {
              return new TwoD(ev.offsetX, ev.offsetY);
         }
         // This works in firefox or chrome:
-        return new TwoD(ev.layerX - canvas.offsetLeft,
-                    ev.layerY - canvas.offsetTop);
+        return new TwoD(ev.layerX - context.canvas.offsetLeft,
+                    ev.layerY - context.canvas.offsetTop);
     }
 
     function highlightUnderMouse(ev) {
@@ -346,28 +350,25 @@ function sphere(tags) {
         var x = offset + (radius * (pos.x + 1));
         var y = offset + (radius * (pos.y + 1));
 
-        context.globalAlpha = alpha;
-        context.font = fontSize + 'px sans-serif';
+        context.context.globalAlpha = alpha;
+        context.context.font = fontSize + 'px sans-serif';
 
         if (entry == highlighted) {
-            context.fillStyle  = '#0000FF';
+            context.context.fillStyle  = '#0000FF';
         } else {
-            context.fillStyle  = '#FF0000';
+            context.context.fillStyle  = '#FF0000';
         }
 
-        context.fillText(entry.tag.title, x, y);
+        context.context.fillText(entry.tag.title, x, y);
 
         // Save the canvas location for click-checking.
-        var metrics = context.measureText(entry.tag.title);
+        var metrics = context.context.measureText(entry.tag.title);
         entry.setCanvasPosition(x, y, fontSize, metrics.width);
     }
 
     function draw() {
         var i;
-        context.globalAlpha = 1.0;
-        context.fillStyle = gradient;
-        context.clearRect(0, 0, canvasSize, canvasSize);
-        context.fillRect(0, 0, canvasSize, canvasSize);
+        context.reset();
         for (i = 0; i < slots.length; i++) {
             drawEntry(slots[i]);
         }
@@ -382,35 +383,37 @@ function sphere(tags) {
         draw();
     }
     
-    canvas.addEventListener("mousemove", onMouseMove, false);
-    canvas.addEventListener("mousedown", onMouseDown, false);
-    canvas.addEventListener("mouseup", onMouseUp, false);
-    canvas.addEventListener("mouseout", onMouseOut, false);
-    canvas.addEventListener("click", onClick, false);
+    context.canvas.addEventListener("mousemove", onMouseMove, false);
+    context.canvas.addEventListener("mousedown", onMouseDown, false);
+    context.canvas.addEventListener("mouseup", onMouseUp, false);
+    context.canvas.addEventListener("mouseout", onMouseOut, false);
+    context.canvas.addEventListener("click", onClick, false);
 
     // This kicks things off:
     draw();
     setInterval(onInterval, 1000/framesPerSecond);
 }
 
-function loadSphere(jsonObj) {
+function loadSphere(jsonObj, context) {
     var tags = getTopTags(jsonObj.categories);
     // It seems to work if waiting for the load or just starting it right
     // away, so for now just do the former.
-    sphere(tags)
+    sphere(tags, context)
     // or switch to this to do the latter
     // window.addEventListener('load', function() { sphere(tags) } , false);
 }
 
 function kickSphere() {
-    var key = '_' + new Date;
+    var context = new sphereContext();
+    var key = '_' + + new Date;
     var script = document.createElement('script');
     var head = document.getElementsByTagName('head')[0] 
             || document.documentElement;
 
+    context.reset();
     window[key] = function(jsonObj) {
         head.removeChild(script);
-        loadSphere(jsonObj);
+        loadSphere(jsonObj, context);
     };
 
     script.src = "http://banachowski.com/deprogramming/"
