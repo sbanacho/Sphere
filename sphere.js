@@ -18,10 +18,11 @@ function Tag(title) {
 }
 
 function getTopTags(categories) {
-    categories.sort(function(a, b) { return b.post_count - a.post_count; });
     var i;
     var tags = [];
     var mapById = {};
+    
+    categories.sort(function(a, b) { return b.post_count - a.post_count; });
     
     // Categories may be nested, need to recursively build path.
     function getSlug(map, category) {
@@ -305,6 +306,7 @@ function sphere(tags, context) {
     function onClick(ev) {
         // Distinguish between drags and clicks.  Only clicks open links.
         if (peakDragDistance.x > 2 || peakDragDistance.y > 2) {
+            return;
         }
         else if (highlighted != null) {
             location.href = "http://banachowski.com/deprogramming/category/"
